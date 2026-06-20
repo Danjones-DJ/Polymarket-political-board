@@ -1,0 +1,179 @@
+
+# 00: Load packages -------------------------------------------------------
+pacman::p_load(httr2, jsonlite, tidyverse, lubridate, purrr, glue)
+options(scipen=999)
+
+# Set up API end points
+# First for Polymarket is "GAMMA"
+gamma_base = "https://gamma-api.polymarket.com"
+
+# Make initial request
+req = request(gamma_base) %>%
+  req_url_path_append("events") %>%
+  req_url_query(
+    active = "true",
+    closed = "false",
+    limit = 100
+  )
+
+resp = req_perform(req)
+
+# resp_status(resp) # 200 = OKAY
+
+# Now turn the above request into an R object
+events = resp_body_json(resp, simplifyVector = FALSE)
+
+names(events[[1]])
+# events[[1]]
+
+# This is messy and nested -> goal is how can I make this useful?
+# Idea (i think?) is to look inside markets [32]
+# events[[1]][32]
+
+events[[1]][32]$markets[[1]]$questionID
+events[[1]][32]$markets[[1]]$lastTradePrice
+events[[1]][32]$markets[[1]]$startDate
+events[[1]][32]$markets[[1]]$endDate
+events[[1]][32]$markets[[1]]$description
+events[[1]][32]$markets[[1]]$outcomes
+events[[1]][32]$markets[[1]]$outcomePrices
+events[[1]][32]$markets[[1]]$question
+
+events[[1]]$id
+
+events[[1]][32]$markets[[1]] 
+events[[1]]$markets[[1]]
+
+
+# for one event:
+# keep only the markets where acceptingOrders is TRUE
+events[[1]]$markets <- keep(
+  events[[1]]$markets,
+  ~ isTRUE(.x$acceptingOrders)
+)
+
+# Now apply to this for all events in events
+events = map(events, function(event) {
+  
+  event$markets = keep(
+    event$markets, ~ isTRUE(.x$acceptingOrders)
+  )
+  
+})
+
+# Test
+for (i in seq_along(events)) {
+  print(events[[i]][[1]]$acceptingOrders)
+}
+
+
+# Inspect key aspects
+m <- events[[1]][[1]]
+
+m$volume
+m$volume24hr
+m$volume1wk
+m$volume1mo
+m$oneDayPriceChange
+m$oneWeekPriceChange
+m$oneMonthPriceChange
+
+# outcomePrices = current market state
+# lastTradePrice = last executed trade
+
+
+# Try to extract into df for one event
+event_one = tibble(
+  start_date = events[[1]][[1]]$startDate, 
+  end_date = events[[1]][[1]]$endDate,
+  
+  question = events[[1]][[1]]$question,
+  description = events[[1]][[1]]$description,
+  
+  slug = events[[1]][[1]]$slug,
+  
+  outcomes = events[[1]][[1]]$outcomes,
+  outcome_prices = events[[1]][[1]]$outcomePrices,
+  last_traded_price = events[[1]][[1]]$lastTradePrice,
+  
+  liquidity = events[[1]][[1]]$liquidity,
+  
+  volume = events[[1]][[1]]$volume,
+  volume_day = events[[1]][[1]]$volume24hr,
+  volume_week = events[[1]][[1]]$volume1wk,
+  volume_month = events[[1]][[1]]$volume1mo,
+  price_change_day = events[[1]][[1]]$oneDayPriceChange,
+  price_change_week = events[[1]][[1]]$oneWeekPriceChange,
+  price_change_month = events[[1]][[1]]$oneMonthPriceChange
+)
+
+
+# Try to do to all
+
+events_dataframe = map_dfr(events, function(event)  {
+  
+  row = tibble(
+    start_date = event[[1]]$startDate, 
+    end_date = event[[1]]$endDate,
+    
+    question = event[[1]]$question,
+    description = event[[1]]$description,
+    
+    slug = event[[1]]$slug,
+    
+    outcomes = event[[1]]$outcomes,
+    outcome_prices = event[[1]]$outcomePrices,
+    last_traded_price = event[[1]]$lastTradePrice,
+    
+    liquidity = as.numeric(event[[1]]$liquidity),
+    
+    volume = as.numeric(event[[1]]$volume),
+    volume_day = event[[1]]$volume24hr,
+    volume_week = event[[1]]$volume1wk,
+    volume_month = event[[1]]$volume1mo,
+    price_change_day = event[[1]]$oneDayPriceChange,
+    price_change_week = event[[1]]$oneWeekPriceChange,
+    price_change_month = event[[1]]$oneMonthPriceChange
+  )
+})
+
+events_dataframe %>% skimr::skim()
+
+# Filter to only show markets with volume in excess of 
+# events_dataframe %>% filter(
+#   volume > as.numeric(summary(events_dataframe$volume)[2])
+# )
+
+events_clean = events_dataframe %>% 
+  filter(volume > 100000) %>%
+  mutate(
+    start_date = as.Date(start_date),
+    end_date = as.Date(end_date),
+    days_since = as.numeric(Sys.Date() - start_date)
+  ) %>% arrange(days_since) 
+
+EVENTS = events_clean %>% 
+  mutate(
+    # Turn messy text into list
+    outcome_list = map(outcomes, fromJSON),
+    price_list = map(outcome_prices, fromJSON),
+    
+    # List outcomes
+    outcome_1 = map_chr(outcome_list, 1),
+    outcome_2 = map_chr(outcome_list, 2),
+    
+    # List prices
+    price_1 = as.numeric(map_chr(price_list, 1)),
+    price_2 = as.numeric(map_chr(price_list, 2)),
+    
+    # Summary var
+    predicted_outcome = ifelse(
+      price_1 > price_2, 
+      glue("{question}: {outcome_1} (~{price_1 * 100}%)"),
+      glue("{question}: {outcome_2} (~{price_2 * 100}%)")
+    )
+  )
+
+View(EVENTS)
+# # Second for Polymarket is "CLOB"
+# clob_base = "https://clob.polymarket.com"
