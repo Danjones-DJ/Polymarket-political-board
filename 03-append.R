@@ -7,7 +7,7 @@ writeLines(
 
 gs4_auth(path = "service-account.json")
 
-SHEET_ID <- "1Irok2DRw32DB1QD-zOO1QHGCw0iWkQGVbRrWiFAedKc"
+SHEET_ID <- "137LuKcAhWN9dNUUY1-Eh-qSh6SmvKhpNh3gP07Y6Jd4"
 
 # new scrape
 new_rows <- read_rds("data/EVENTS.rds") %>%

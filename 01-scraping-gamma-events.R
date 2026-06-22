@@ -119,8 +119,8 @@ EVENTS = events_clean %>%
     # How far above 50% confidence?
     confidence_margin = ifelse(
       price_1 > price_2,
-      price_1 - 0.5,
-      price_2 - 0.5
+      (price_1 - 0.5)*100,
+      (price_2 - 0.5)*100
     ),
     SCRAPING_DATE = Sys.Date()
     
