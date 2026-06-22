@@ -81,7 +81,7 @@ events_dataframe %>% skimr::skim()
 # 06: Filter and refine data ----------------------------------------------
 
 events_clean = events_dataframe %>% 
-  filter(volume > 100000) %>% # Only give me markets with > $100,000 volume traded
+  filter(volume > 500000) %>% # Only give me markets with > $500,000 volume traded
   mutate(days_since = as.numeric(Sys.Date() - start_date)) %>% # How long has this been open?
   arrange(days_since) 
 
