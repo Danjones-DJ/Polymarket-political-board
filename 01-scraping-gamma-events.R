@@ -128,7 +128,31 @@ EVENTS = events_clean %>%
   select(-outcomes, -outcome_prices)
 
 
-# 07: Save! ---------------------------------------------------------------
+# 07: Rename Cols + Save! -------------------------------------------------
+
+EVENTS = EVENTS %>%
+  rename(
+    EVENT_ID = event_id,
+    `Start date` = start_date,
+    `End date` = end_date,
+    `Topic` = question,
+    `Description` = description,
+    `Slug` = slug,    
+    `Current market price` = last_traded_price,
+    `Liquidity` = liquidity,
+    `Volume` = volume,
+    `Volume (24 hours)` = volume,
+    `Volume (1 week)` = volume,
+    `Volume (1 month)` = volume,
+    `Price change (24 hours)` = price_change_day,
+    `Price change (1 week)` = price_change_week,
+    `Price change (1 month)` = price_change_month,
+    `Days since` = days_since,
+    `Predicted outcome` = predicted_outcome,
+    `Confidence margin` = confidence_margin
+  )
+
+
 saveRDS(EVENTS, "data/EVENTS.rds")
 
 

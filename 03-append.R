@@ -1,22 +1,24 @@
-pacman::p_load(googlesheets4, tidyverse, lubridate, glue)
+pacman::p_load(googlesheets4, tidyverse, lubridate)
 
-writeLines(
-  Sys.getenv("GSHEET_AUTH_JSON"),
-  "service-account.json"
-)
+gs4_auth(path = "polymarket-scraping-298dd3f24d2c.json")
 
-gs4_auth(path = "service-account.json")
+SHEET_ID <- "1Irok2DRw32DB1QD-zOO1QHGCw0iWkQGVbRrWiFAedKc"
 
-# Sheet
-SHEET_URL <- "https://docs.google.com/spreadsheets/d/18dYy80i2ddaB5KhU6Qgog8fh6nStsRvhf9qK6KKqWCg/edit?gid=2061874730#gid=2061874730"
+# new scrape
+new_rows <- read_rds("data/EVENTS.rds") %>%
+  mutate(scraping_date = today())
 
-# Load new and old data to work with
-new_data = read_rds("data/EVENTS.rds")
-old_data = read_sheet(ss = SHEET_URL, sheet = "eventdata") 
+# existing sheet
+old_rows <- read_sheet(SHEET_ID)
 
-# Update dataset with new data appending, update dates
-updated_data = bind_rows(old_data, new_data)
+# keep only genuinely new id-date pairs
+rows_to_append <- new_rows %>%
+  anti_join(
+    old_rows %>% select(EVENT_ID, SCRAPING_DATE),
+    by = c("EVENT_ID", "SCRAPING_DATE")
+  )
 
-# Write sheet
-sheet_write(data = updated_data, ss = SHEET_URL, sheet="eventdata")
-
+# append only if there is something new
+if (nrow(rows_to_append) > 0) {
+  sheet_append(SHEET_ID, rows_to_append)
+}
