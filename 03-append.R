@@ -1,6 +1,11 @@
 pacman::p_load(googlesheets4, tidyverse, lubridate)
 
-gs4_auth(path = "polymarket-scraping-298dd3f24d2c.json")
+writeLines(
+  Sys.getenv("GSHEET_AUTH_JSON"),
+  "service-account.json"
+)
+
+gs4_auth(path = "service-account.json")
 
 SHEET_ID <- "1Irok2DRw32DB1QD-zOO1QHGCw0iWkQGVbRrWiFAedKc"
 
