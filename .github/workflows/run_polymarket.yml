@@ -16,7 +16,7 @@ jobs:
 
       - name: Install packages
         run: |
-          Rscript -e 'install.packages(c("httr2", "jsonlite", "tidyverse", "lubridate", "purrr", "glue", "googlesheets4""), repos = "https://cloud.r-project.org")'
+          Rscript -e 'install.packages(c("httr2", "jsonlite", "tidyverse", "lubridate", "purrr", "glue", "googlesheets4"), repos = "https://cloud.r-project.org")'
 
       - name: Run run_all.R
         run: Rscript run_all.R
