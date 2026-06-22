@@ -18,7 +18,7 @@ jobs:
       - name: Install R packages
         run: |
           Rscript -e 'install.packages("pacman", repos = "https://cloud.r-project.org")'
-          Rscript -e 'pacman::p_load(httr2, jsonlite, tidyverse, lubridate, purrr, glue, googlesheets4, googledrive)'
+          Rscript -e 'pacman::p_load(httr2, skimr, jsonlite, tidyverse, lubridate, purrr, glue, googlesheets4, googledrive)'
 
       - name: Run scraper
         run: Rscript run_all.R
