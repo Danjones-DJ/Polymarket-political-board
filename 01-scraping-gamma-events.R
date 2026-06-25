@@ -81,12 +81,11 @@ events_dataframe %>% skimr::skim()
 # 06: Filter and refine data ----------------------------------------------
 
 events_clean = events_dataframe %>% 
-  filter(volume > 500000) %>% # Only give me markets with > $500,000 volume traded
+  filter(volume > 250000) %>% # Only give me markets with > $250,000 volume traded
   mutate(days_since = as.numeric(Sys.Date() - start_date)) %>% # How long has this been open?
   arrange(days_since) 
 
 # skimr::skim(events_clean) # No important NAs following filtering
-
 # Final cleaning - turn messy aspects into something useful
 EVENTS = events_clean %>% 
   mutate(
@@ -127,10 +126,10 @@ EVENTS = events_clean %>%
     ) %>%
   select(-outcomes, -outcome_prices)
 
-
+names(EVENTS)
 # 07: Rename Cols + Save! -------------------------------------------------
 
-EVENTS = EVENTS %>%
+EVENTS.v2 = EVENTS %>%
   rename(
     EVENT_ID = event_id,
     `Start date` = start_date,
@@ -141,9 +140,9 @@ EVENTS = EVENTS %>%
     `Current market price` = last_traded_price,
     `Liquidity` = liquidity,
     `Volume` = volume,
-    `Volume (24 hours)` = volume,
-    `Volume (1 week)` = volume,
-    `Volume (1 month)` = volume,
+    `Volume (24 hours)` = volume_day,
+    `Volume (1 week)` = volume_week,
+    `Volume (1 month)` = volume_month,
     `Price change (24 hours)` = price_change_day,
     `Price change (1 week)` = price_change_week,
     `Price change (1 month)` = price_change_month,
@@ -152,8 +151,7 @@ EVENTS = EVENTS %>%
     `Confidence margin` = confidence_margin
   )
 
-
-saveRDS(EVENTS, "data/EVENTS.rds")
+saveRDS(EVENTS.v2, "data/EVENTS.rds")
 
 
 
